@@ -28,7 +28,7 @@
 		  <td><input type=button value="save radius" onClick="setRadius()"></td>
 	    </tr>		
         <tr>
-		  <td><input type=button value="See All Busses" onClick="displayCloseBuses()"</td>
+		  <td><input type=button value="See All Busses" onClick="displayAllBusses()"</td>
 		  <td><input type=button value="See Bus Stops Close to Start" onClick=""></td>
 	    </tr>
 		<tr>
@@ -44,10 +44,12 @@
 	
 	<script>
 		var theMap  //global
-		var centerLatLng = {lat: 41.635768, lng: -72.787725}
+		var centerLatLng = {lat: 41.635768, lng: -72.787725};
 		var radius
 		var start
 		var end
+	
+		update(distance(centerLatLng, centerLatLng));
 	
 	  	function initMap() {
 		  theMap = new google.maps.Map(document.getElementById('map'), {
@@ -139,12 +141,25 @@
 		  radius = document.userInput.radius.value * 1; //cast type to number
 		}
 		
-		function distance(latLng1, latLng2){  
-	      //both arguments MUST be LatLng objects i.e. {lat: double, lng: double}
+        function distance(pos1, pos2){  
+	      //both pos1 must be LatLng objects i.e. {lat: double, lng: double}
 		  var dist = google.maps.geometry.spherical.computeDistanceBetween(pos1, pos2); //in meters
 		  dist = dist / 1609.34; //convert to miles
 		  return dist;
 	    }
+		
+		function displayAllBusses(){
+	      var data = readRealTimeData(1).entity; //1 := vehicle positions
+	      for (i = 0; i < data.length; i++){
+	        new google.maps.Marker({
+		      map: theMap,
+		      position: new google.maps.LatLng( data[i].vehicle.position.latitude*1, data[i].vehicle.position.longitude*1),
+		      label: data[i].id
+		    });
+	      }		  
+	    }
+		
+		
 		
 
 		
