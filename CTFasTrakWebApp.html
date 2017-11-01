@@ -21,11 +21,13 @@
 		  });        
 	    }
 		
+		//https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/calendar_datesJSON.txt
+		
 	    //String fileName must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
 	    //will return an object containing 
 	    function readStaticData(fileName){
 		  var req = new XMLHttpRequest();
-		  req.open('GET', 'https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/master/version1/CTFasTrakStaticData/' + fileName + 'JSON.txt', false);
+		  req.open('GET', 'https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/' + fileName + 'JSON.txt', false);
 		  req.send(null);
 		
 		  if(req.status == 200){
@@ -36,7 +38,7 @@
 		  }
 	    }
 	
-	
+		
 	</script>
 	
 	<script async defer
