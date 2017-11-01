@@ -11,7 +11,7 @@
   <body>
     <div id="map"></div>
 	
-	<form name = "userLocation">
+	<form name = "userInput">
 	  <table>
 		<tr>
 	      <td>Enter current location:</td>
@@ -22,7 +22,7 @@
 			<td><input type=text name=end size=30></td>
     	  </tr>
 		  <tr>
-		 	<td><input type=button value="GO!" onClick=""</td>
+		 	<td><input type=button value="GO!" onClick="displayUserStartStopLoc()"</td>
 	      </tr>		
 		  <tr>
 		 	<td><input type=button value="See Busses" onClick=""</td>
@@ -35,6 +35,8 @@
 	      </tr>
 	  </table>
 	</form>
+	
+	<p id="testing"> </p>
 	
 	<script>
 		var theMap  //global
@@ -49,7 +51,6 @@
 		  viewBusStops();
 	    }
 		
-		//https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/calendar_datesJSON.txt
 		
 	    //String fileName must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
 	    //will return an object containing 
@@ -65,6 +66,15 @@
 		    return dataObj;
 		  }
 	    }
+		
+		function update(message){
+		  var text = document.getElementById("testing").innerHTML;
+		  text = text + "<br>" + message;
+		  document.getElementById("testing").innerHTML = text;
+	    }
+		
+	  
+	  
 		
 
 		
