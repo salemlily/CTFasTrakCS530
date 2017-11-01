@@ -28,11 +28,12 @@
 		  <td><input type=button value="save radius" onClick="setRadius()"></td>
 	    </tr>		
         <tr>
-		<td><input type=button value="See All Busses" onClick=""</td>
+		  <td><input type=button value="See All Busses" onClick="displayCloseBuses()"</td>
+		  <td><input type=button value="See Bus Stops Close to Start" onClick=""></td>
 	    </tr>
 		<tr>
-		  <td><input type=button value="See Bus Stops Close to Start" onClick=""></td>
-		  <td><input type=text name=distance size = 12></td>				
+		  <td></td>
+		  <td></td>				
   	    </tr>
 	    <tr>
 	    </tr>
@@ -43,13 +44,15 @@
 	
 	<script>
 		var theMap  //global
+		var centerLatLng = {lat: 41.635768, lng: -72.787725}
 		var radius
+		var start
+		var end
 	
 	  	function initMap() {
-		  var cent = {lat: 41.635768, lng: -72.787725};
 		  theMap = new google.maps.Map(document.getElementById('map'), {
 		    zoom: 9,
-		    center: cent,
+		    center: centerLatLng,
 		    mapTypeId: 'terrain' 
 		  }); 
 	    }
@@ -89,15 +92,16 @@
 		  var start = document.userInput.start.value;
 		  var end   = document.userInput.end.value;
 		  if (start != ""){ //if user entered something
-		    update("in if block");
 		    var startGeoCode = getGeoCode(start);
-			var latLng = startGeoCode.results[0].geometry.location;
-			addMarker(latLng, "START");
+			var pos = startGeoCode.results[0].geometry.location; //latitude longitude position
+			addMarker(pos, "START");
+			start = {LatLng: pos};
 		  }
 		  if (end != ""){
 		    var endGeoCode = getGeoCode(end);
-			var latLng = endGeoCode.results[0].geometry.location;
-			addMarker(latLng, "END");
+			var pos = endGeoCode.results[0].geometry.location; //latitude longitude position
+			addMarker(pos, "END");
+			end = {LatLng: pos};
 		  }
 		}
 		
@@ -141,6 +145,8 @@
 		  dist = dist / 1609.34; //convert to miles
 		  return dist;
 	    }
+		
+
 		
 		
 	</script>
