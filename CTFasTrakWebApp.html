@@ -67,11 +67,53 @@
 		  }
 	    }
 		
+		function displayUserStartStopLoc(){
+		  var start = document.userInput.start.value;
+		  var end   = document.userInput.end.value;
+		  if (start != ""){ //if user entered something
+		    update("in if block");
+		    var startGeoCode = getGeoCode(start);
+			var latLng = startGeoCode.results[0].geometry.location;
+			addMarker(latLng, "START");
+		  }
+		  if (end != ""){
+		    var endGeoCode = getGeoCode(end);
+			var latLng = endGeoCode.results[0].geometry.location;
+			addMarker(latLng, "END");
+		  }
+		}
+		
+		function getGeoCode(address){
+		  address = address.replace(" ", "+");
+		  var req = new XMLHttpRequest();
+		  req.open('GET', 'https://maps.googleapis.com/maps/api/geocode/json?address=' + address 
+						+ '&key=AIzaSyBezkqLyMpXAF9dBb4X5rZeQkyF8Y5_Te4', false);
+		  req.send(null);
+		
+		  if(req.status == 200){
+		    var rawString = req.responseText;
+		    var geoData = JSON.parse(rawString);
+			update(geoData);
+		  }
+		  
+		  return geoData;
+		}
+		
 		function update(message){
 		  var text = document.getElementById("testing").innerHTML;
 		  text = text + "<br>" + message;
 		  document.getElementById("testing").innerHTML = text;
 	    }
+		
+		function addMarker(latLng, labelText){
+		  var marker = new google.maps.Marker({
+		    map: theMap,
+			label: labelText,
+			position: latLng
+		  });
+		}
+		
+
 		
 	  
 	  
