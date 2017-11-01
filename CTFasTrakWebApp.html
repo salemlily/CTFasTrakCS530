@@ -12,6 +12,8 @@
     <div id="map"></div>
 	
 	<script>
+		var theMap  //global
+	
 	  	function initMap() {
 		  var cent = {lat: 41.635768, lng: -72.787725};
 		  theMap = new google.maps.Map(document.getElementById('map'), {
@@ -37,6 +39,19 @@
 		    return dataObj;
 		  }
 	    }
+		
+		function viewBusStops(){
+		  var busStopData = readStaticData("stops");
+		  for (i = 0; i < busStopData; i++){
+		    busStop = busStopData[i];
+			var marker = new google.maps.Marker({
+			  position: new LatLng (busStop.stop_lat, busStop.stop.lon),
+			  map: theMap
+		    })
+		  }
+		}
+		
+		
 	
 		
 	</script>
