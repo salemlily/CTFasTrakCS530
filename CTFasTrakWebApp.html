@@ -20,11 +20,12 @@
 		</tr>
 		<tr>
 		  <td>Enter destination location:</td>
-		  <td><input type=text name=end size=30></td>
-			
+		  <td><input type=text name=end size=30></td>			
     	</tr>
 	    <tr>
-		 	
+		  <td>Enter a search radius</td>
+		  <td><input type=text name=radius size=30><td>
+		  <td><input type=button value="save radius" onClick="setRadius()"></td>
 	    </tr>		
         <tr>
 		<td><input type=button value="See Busses" onClick=""</td>
@@ -42,6 +43,7 @@
 	
 	<script>
 		var theMap  //global
+		var radius
 	
 	  	function initMap() {
 		  var cent = {lat: 41.635768, lng: -72.787725};
@@ -113,6 +115,10 @@
 			label: labelText,
 			position: latLng
 		  });
+		}
+		
+		function setRadius(){
+		  radius = document.userInput.radius.value * 1; //cast type to number
 		}
 		
 
