@@ -1,7 +1,29 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <style>
+       #map {
+        height: 600px;
+        width: 80%;
+       }
+    </style>
   </head>
   <body>
+    <div id="map"></div>
+	
+	<script>
+	  	function initMap() {
+		var cent = {lat: 41.635768, lng: -72.787725};
+		theMap = new google.maps.Map(document.getElementById('map'), {
+		  zoom: 9,
+		  center: cent,
+		  mapTypeId: 'terrain' 
+		});        
+	}
+	</script>
+	
+	<script async defer
+		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBezkqLyMpXAF9dBb4X5rZeQkyF8Y5_Te4&libraries=geometry&callback=initMap">
+	</script>
   </body>
 </html>
