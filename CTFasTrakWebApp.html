@@ -28,7 +28,7 @@
 		  <td><input type=button value="save radius" onClick="setRadius()"></td>
 	    </tr>		
         <tr>
-		<td><input type=button value="See Busses" onClick=""</td>
+		<td><input type=button value="See All Busses" onClick=""</td>
 	    </tr>
 		<tr>
 		  <td><input type=button value="See Bus Stops Close to Start" onClick=""></td>
@@ -51,8 +51,7 @@
 		    zoom: 9,
 		    center: cent,
 		    mapTypeId: 'terrain' 
-		  });        
-		  viewBusStops();
+		  }); 
 	    }
 		
 		
@@ -67,6 +66,21 @@
 		    var jsonString = req.responseText;		
 		    var dataObj = JSON.parse(jsonString);     
 
+		    return dataObj;
+		  }
+	    }
+		
+		//n must be an integer 0, 1, 2, 3 to indicate which of the live data streams to access
+	    //will return an object containing the data from the feed specified
+		function readRealTimeData(n){
+		  var feedType = ['tripupdate/tripupdates', 'vehicle/vehiclepositions', 'alert/alerts', 'externalfeed/trapezerealtimefeed'];
+		  var req = new XMLHttpRequest();
+		  req.open('GET', 'http://65.213.12.244/realtimefeed/' + feedType[n] + '.json', false);
+		  req.send(null);
+		
+		  if(req.status == 200){
+		    var rawString = req.responseText;	
+		    var dataObj = JSON.parse(rawString);
 		    return dataObj;
 		  }
 	    }
@@ -87,7 +101,7 @@
 		  }
 		}
 		
-		function getGeoCode(address){
+		function getGeoCode(address){  
 		  address = address.replace(" ", "+");
 		  var req = new XMLHttpRequest();
 		  req.open('GET', 'https://maps.googleapis.com/maps/api/geocode/json?address=' + address 
