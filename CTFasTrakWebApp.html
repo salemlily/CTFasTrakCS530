@@ -135,15 +135,13 @@
 		  radius = document.userInput.radius.value * 1; //cast type to number
 		}
 		
-
+		function distance(latLng1, latLng2){  
+	      //both arguments MUST be LatLng objects i.e. {lat: double, lng: double}
+		  var dist = google.maps.geometry.spherical.computeDistanceBetween(pos1, pos2); //in meters
+		  dist = dist / 1609.34; //convert to miles
+		  return dist;
+	    }
 		
-	  
-	  
-		
-
-		
-		
-	
 		
 	</script>
 	
