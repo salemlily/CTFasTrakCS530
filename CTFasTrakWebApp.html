@@ -21,6 +21,7 @@
 		    center: cent,
 		    mapTypeId: 'terrain' 
 		  });        
+		  viewBusStops();
 	    }
 		
 		//https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/calendar_datesJSON.txt
@@ -40,16 +41,7 @@
 		  }
 	    }
 		
-		function viewBusStops(){
-		  var busStopData = readStaticData("stops");
-		  for (i = 0; i < busStopData; i++){
-		    busStop = busStopData[i];
-			var marker = new google.maps.Marker({
-			  position: new LatLng (busStop.stop_lat, busStop.stop.lon),
-			  map: theMap
-		    })
-		  }
-		}
+
 		
 		
 	
