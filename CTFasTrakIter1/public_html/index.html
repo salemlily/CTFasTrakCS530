@@ -1,36 +1,46 @@
 <!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
 <html>
-  <head>
-    <style>
-       #map {
-        height: 600px;
-        width: 80%;
-       }
-    </style>
-  </head>
-  <body>
-    <div id="map"></div>
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            #map {
+                height: 600px;
+                width: 80%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="map"></div>
 	
 	<form name = "userInput">
 	  <table>
 		<tr>
 	      <td>Enter current location:</td>
 		  <td> <input type=text name=start size=30> <td>
-		  <td><input type=button value="GO!" onClick="displayUserStartStopLoc()"</td>
+		  <td><input type=button value="GO!" onClick="displayUserStartStopLoc()"></td>
 		</tr>
 		<tr>
 		  <td>Enter destination location:</td>
-		  <td><input type=text name=end size=30></td>			
-    	</tr>
-	    <tr>
+		  <td><input type=text name=end size=30></td>	
+                  <td></td>
+                </tr>
+                <tr>
 		  <td>Enter a search radius</td>
 		  <td><input type=text name=radius size=30><td>
 		  <td><input type=button value="save radius" onClick="setRadius()"></td>
-	    </tr>		
-        <tr>
-		  <td><input type=button value="See All Busses" onClick="displayAllBusses()"</td>
+                </tr>		
+                <tr>
+		  <td><input type=button value="See All Busses" onClick="displayAllBusses()"></td>
+                  <td><input type=button value="View Close Busses" onClick="displayCloseBussesToStart()"></td>
 		  <td><input type=button value="forTesting" onClick="test()"></td>
-	    </tr>
+                </tr>
 		<tr>
 		  <td></td>
 		  <td></td>				
@@ -41,8 +51,8 @@
 	</form>
 	
 	<p id="testing"> </p>
-	
-	<script>
+        
+        <script>
 		var theMap;  //global
 		var centerLatLng;
 		var radius;
@@ -60,12 +70,12 @@
 		    center: centerLatLng,
 		    mapTypeId: 'terrain' 
 		  }); 
-	    }
+	        }
 		
 		
-	    //String fileName must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
-	    //will return an object containing 
-	    function readStaticData(fileName){
+	        //String fileName must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
+	        //will return an object containing 
+	        function readStaticData(fileName){
 		  var req = new XMLHttpRequest();
 		  req.open('GET', 'https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/' + fileName + 'JSON.txt', false);
 		  req.send(null);
@@ -76,10 +86,10 @@
 
 		    return dataObj;
 		  }
-	    }
+	        }
 		
 		//n must be an integer 0, 1, 2, 3 to indicate which of the live data streams to access
-	    //will return an object containing the data from the feed specified
+	        //will return an object containing the data from the feed specified
 		function readRealTimeData(n){
 		  var feedType = ['tripupdate/tripupdates', 'vehicle/vehiclepositions', 'alert/alerts', 'externalfeed/trapezerealtimefeed'];
 		  var req = new XMLHttpRequest();
@@ -91,22 +101,23 @@
 		    var dataObj = JSON.parse(rawString);
 		    return dataObj;
 		  }
-	    }
+	        }
 		
 		function displayUserStartStopLoc(){
 		  start = document.userInput.start.value;
 		  end   = document.userInput.end.value;
-		  if (start != ""){ //if user entered something
+		  if (start !== ""){ //if user entered something
 		    var startGeoCode = getGeoCode(start);
-			var pos = startGeoCode.results[0].geometry.location; //latitude longitude position
-			addMarker(pos, "START");
-			start = pos;
+		      var pos = new google.maps.LatLng(startGeoCode.results[0].geometry.location.lat,
+                                              startGeoCode.results[0].geometry.location.lng); //latitude longitude position
+		      addMarker(pos, "START");
+		      start = pos;
 		  }
-		  if (end != ""){
+		  if (end !== ""){
 		    var endGeoCode = getGeoCode(end);
-			var pos = endGeoCode.results[0].geometry.location; //latitude longitude position
-			addMarker(pos, "END");
-			end = pos;
+		      var pos = endGeoCode.results[0].geometry.location; //latitude longitude position
+		      addMarker(pos, "END");
+		      end = pos;
 		  }
 		}
 		
@@ -129,7 +140,7 @@
 		  var text = document.getElementById("testing").innerHTML;
 		  text = text + "<br>" + message;
 		  document.getElementById("testing").innerHTML = text;
-	    }
+	        }
 		
 		function addMarker(latLng, labelText){
 		  var marker = new google.maps.Marker({
@@ -143,49 +154,45 @@
 		  radius = document.userInput.radius.value * 1; //cast type to number
 		}
 		
-        function distance(pos1, pos2){  
-	      //both pos1 must be LatLng objects i.e. {lat: double, lng: double}
+                function distance(pos1, pos2){  
+	        //both pos1 must be LatLng objects i.e. {lat: double, lng: double}
 		  var dist = google.maps.geometry.spherical.computeDistanceBetween(pos1, pos2); //in meters
 		  dist = dist / 1609.34; //convert to miles
 		  return dist;
-	    }
+	        }
 		
 		function displayAllBusses(){
-	      var data = readRealTimeData(1).entity; //1 := vehicle positions
-	      for (i = 0; i < data.length; i++){
-	        new google.maps.Marker({
+	          var data = readRealTimeData(1).entity; //1 := vehicle positions
+	          for (i = 0; i < data.length; i++){
+	            new google.maps.Marker({
 		      map: theMap,
 		      position: new google.maps.LatLng( data[i].vehicle.position.latitude*1, data[i].vehicle.position.longitude*1),
 		      label: data[i].id
 		    });
-	      }		  
-	    }
+	          }		  
+	        }
 		
 		function displayCloseBussesToStart(){
-			displayCloseBusses(start, radius);
+		  displayCloseBusses(start, radius);
 		}
 		
 		function displayCloseBusses(center, r){
 		//displays all busses that are within 'r' miles of 'center'
 		  var data = readRealTimeData(1).entity;
 		  var pos;
-		  update(JSON.stringify(center));
 		  for (i = 0; i < data.length; i++){
-		  
-			pos = new google.maps.LatLng(data[i].vehicle.position.latitude*1, data[i].vehicle.position.longitude*1);
-			update(JSON.stringify(pos));
-			update(distance(pos, center));
-			  new google.maps.Marker({
-			    map: theMap,
-				position: pos,
-				label: data[i].id
-			  });
-			 
-		
-		update(i);
-    	  }			
+	            pos = new google.maps.LatLng(data[i].vehicle.position.latitude*1, data[i].vehicle.position.longitude*1);
+		    if (distance(center, pos) < r){
+                      new google.maps.Marker({
+		        map: theMap,
+		        position: pos,
+		        label: data[i].id
+		      });
+                    }
+    	          }			
 		}
 		
+                function createStopMarker(){}
 		
 		
 
@@ -196,5 +203,5 @@
 	<script async defer
 		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBezkqLyMpXAF9dBb4X5rZeQkyF8Y5_Te4&libraries=geometry&callback=initMap">
 	</script>
-  </body>
+    </body>
 </html>
