@@ -57,10 +57,12 @@ and open the template in the editor.
 		var centerLatLng;
 		var radius;
 		var start;
+                var allStops;
 		var end;
+                var busMarkers;
 	
 		function test(){
-		  displayCloseStops(start, radius);		  
+		  update(JSON.stringify(getStopDataById("1")));		  
 		}
 	
 	  	function initMap() {
@@ -70,7 +72,21 @@ and open the template in the editor.
 		    center: centerLatLng,
 		    mapTypeId: 'terrain' 
 		  }); 
+                  getAllStops();
+                  initBusMarkerArray();
 	        }
+                
+                function getAllStops(){
+                  if (allStops === undefined)
+                    allStops = readStaticData("stops");
+                  return allStops;
+                }
+                
+                function initBusMarkerArray(){
+                  if (busMarkers === undefined){
+                    busMarkers = [];
+                  }
+                }
 		
 		
 	        //String fileName must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
@@ -96,7 +112,7 @@ and open the template in the editor.
 		  req.open('GET', 'http://65.213.12.244/realtimefeed/' + feedType[n] + '.json', false);
 		  req.send(null);
 		
-		  if(req.status == 200){
+		  if(req.status === 200){
 		    var rawString = req.responseText;	
 		    var dataObj = JSON.parse(rawString);
 		    return dataObj;
@@ -185,12 +201,18 @@ and open the template in the editor.
                   marker = new google.maps.Marker({
 		        map: theMap,
 		        position: pos,
-		        label: bus.id,
-                        title: bus.vehicle.trip.trip_id
+		        label: "Bus",
+                        busId: bus.id,
+                        tripId: bus.vehicle.trip.trip_id,
+                        routeId: bus.vehicle.trip.route_id,
+                        title: bus.id
 		    });
+                    
                   marker.addListener('click', function(){
-                    theMap.setCenter(marker.getPosition()); 
+                    update("clicked on bus: ");
+                    update(this.busId);
                   });
+                  busMarkers.push(marker);
                 }
 		
                 function displayAllStops(){
@@ -201,8 +223,8 @@ and open the template in the editor.
                   displayCloseStops(start, radius);
                 }
                 
-                function displayCloseStops(center, r){    
-                  var data = readStaticData("stops"); 
+                function displayCloseStops(center, r){
+                  var data = getAllStops();
                   var pos;
                   for (i = 0; i < data.length; i++){
                     pos = new google.maps.LatLng(data[i].stop_lat*1, data[i].stop_lon*1);
@@ -220,11 +242,19 @@ and open the template in the editor.
                     title: stop.stop_id
                   });
                   marker.addListener('click', function(){
-                    theMap.setCenter(marker.getPosition());
+                    theMap.setCenter(this.getPosition());
                   });
                 }
 		
-		
+		function getStopDataById(id){
+                  var stops = getAllStops();
+                  for (i = 0; i < stops.length; i++){
+                    if (stops[i].stop_id === id)
+                      return stops[i];
+                  }
+                  update("ERROR: in getStopDataByID");
+                  update("stop id: " + id + " not found");
+                }
 
 		
 		
