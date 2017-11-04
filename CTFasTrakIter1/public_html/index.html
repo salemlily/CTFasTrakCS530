@@ -162,15 +162,7 @@ and open the template in the editor.
 	        }
 		
 		function displayAllBusses(){
-	          var data = readRealTimeData(1).entity; //1 := vehicle positions
-	          for (i = 0; i < data.length; i++){
-	            new google.maps.Marker({
-		      map: theMap,
-		      position: new google.maps.LatLng( data[i].vehicle.position.latitude*1, data[i].vehicle.position.longitude*1),
-		      label: data[i].id,
-                      title: data[i].vehicle.trip.trip_id
-		    });
-	          }		  
+                  displayCloseBusses(centerLatLng, 10000);
 	        }
 		
 		function displayCloseBussesToStart(){
@@ -180,7 +172,7 @@ and open the template in the editor.
 		function displayCloseBusses(center, r){
 		//displays all busses that are within 'r' miles of 'center'
 		  var data = readRealTimeData(1).entity;
-		  var pos, marker;
+		  var pos;
 		  for (i = 0; i < data.length; i++){
 	            pos = new google.maps.LatLng(data[i].vehicle.position.latitude*1, data[i].vehicle.position.longitude*1);
 		    if (distance(center, pos) < r){
@@ -193,8 +185,8 @@ and open the template in the editor.
                   marker = new google.maps.Marker({
 		        map: theMap,
 		        position: pos,
-		        label: "BUS",
-                        title: bus.id
+		        label: bus.id,
+                        title: bus.vehicle.trip.trip_id
 		    });
                   marker.addListener('click', function(){
                     theMap.setCenter(marker.getPosition()); 
@@ -202,15 +194,7 @@ and open the template in the editor.
                 }
 		
                 function displayAllStops(){
-                  data = readStaticData("stops");
-                  for (i = 0; i < data.length; i++){
-                    new google.maps.Marker({
-                      map: theMap,
-                      position: new google.maps.LatLng(data[i].stop_lat *1, data[i].stop_lon*1),
-                      label: "BS",
-                      title: data[i].stop_id
-                    });   
-                  }                    
+                  displayCloseStops(centerLatLng, 1000);          
                 }
                 
                 function displayCloseStopsToStart(){
@@ -218,19 +202,26 @@ and open the template in the editor.
                 }
                 
                 function displayCloseStops(center, r){    
-                  data = readStaticData("stops"); 
+                  var data = readStaticData("stops"); 
                   var pos;
                   for (i = 0; i < data.length; i++){
                     pos = new google.maps.LatLng(data[i].stop_lat*1, data[i].stop_lon*1);
                     if ( distance(center, pos) < r){
-                      new google.maps.Marker({
-                        map: theMap,
-                        position: pos,
-                        label: "BS", 
-                        title: data[i].stop_id
-                      });  
+                      addStopMarker(data[i], pos);
                     }
                   }    
+                }
+                
+                function addStopMarker(stop, pos){
+                  var marker = new google.maps.Marker({
+                    map: theMap,
+                    position: pos,
+                    label: stop.stop_id,
+                    title: stop.stop_id
+                  });
+                  marker.addListener('click', function(){
+                    theMap.setCenter(marker.getPosition());
+                  });
                 }
 		
 		
