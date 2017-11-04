@@ -60,7 +60,7 @@ and open the template in the editor.
 		var end;
 	
 		function test(){
-		  displayCloseBussesToStart();		  
+		  displayCloseStops(start, radius);		  
 		}
 	
 	  	function initMap() {
@@ -143,7 +143,7 @@ and open the template in the editor.
 	        }
 		
 		function addMarker(latLng, labelText){
-		  var marker = new google.maps.Marker({
+		  new google.maps.Marker({
 		    map: theMap,
 			label: labelText,
 			position: latLng
@@ -167,7 +167,8 @@ and open the template in the editor.
 	            new google.maps.Marker({
 		      map: theMap,
 		      position: new google.maps.LatLng( data[i].vehicle.position.latitude*1, data[i].vehicle.position.longitude*1),
-		      label: data[i].id
+		      label: data[i].id,
+                      title: data[i].vehicle.trip.trip_id
 		    });
 	          }		  
 	        }
@@ -186,13 +187,40 @@ and open the template in the editor.
                       new google.maps.Marker({
 		        map: theMap,
 		        position: pos,
-		        label: data[i].id
+		        label: "BUS",
+                        title: data[i].id
 		      });
                     }
     	          }			
 		}
 		
-                function createStopMarker(){}
+                function displayAllStops(){
+                  data = readStaticData("stops");
+                  for (i = 0; i < data.length; i++){
+                    new google.maps.Marker({
+                      map: theMap,
+                      position: new google.maps.LatLng(data[i].stop_lat *1, data[i].stop_lon*1),
+                      label: "BS",
+                      title: data[i].stop_id
+                    });   
+                  }                    
+                }
+                
+                function displayCloseStops(center, r){    
+                  data = readStaticData("stops"); 
+                  var pos;
+                  for (i = 0; i < data.length; i++){
+                    pos = new google.maps.LatLng(data[i].stop_lat*1, data[i].stop_lon*1);
+                    if ( distance(center, pos) < r){
+                      new google.maps.Marker({
+                        map: theMap,
+                        position: pos,
+                        label: "BS", 
+                        title: data[i].stop_id
+                      });  
+                    }
+                  }    
+                }
 		
 		
 
