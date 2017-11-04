@@ -180,19 +180,26 @@ and open the template in the editor.
 		function displayCloseBusses(center, r){
 		//displays all busses that are within 'r' miles of 'center'
 		  var data = readRealTimeData(1).entity;
-		  var pos;
+		  var pos, marker;
 		  for (i = 0; i < data.length; i++){
 	            pos = new google.maps.LatLng(data[i].vehicle.position.latitude*1, data[i].vehicle.position.longitude*1);
 		    if (distance(center, pos) < r){
-                      new google.maps.Marker({
+                      addBusMarker(data[i], pos);
+                    }                    
+    	          }			
+		}
+                
+                function addBusMarker(bus, pos){                    
+                  marker = new google.maps.Marker({
 		        map: theMap,
 		        position: pos,
 		        label: "BUS",
-                        title: data[i].id
-		      });
-                    }
-    	          }			
-		}
+                        title: bus.id
+		    });
+                  marker.addListener('click', function(){
+                    theMap.setCenter(marker.getPosition()); 
+                  });
+                }
 		
                 function displayAllStops(){
                   data = readStaticData("stops");
