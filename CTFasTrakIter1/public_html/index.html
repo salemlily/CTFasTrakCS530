@@ -39,10 +39,10 @@ and open the template in the editor.
                 <tr>
 		  <td><input type=button value="See All Busses" onClick="displayAllBusses()"></td>
                   <td><input type=button value="View Close Busses" onClick="displayCloseBussesToStart()"></td>
-		  <td><input type=button value="forTesting" onClick="test()"></td>
+		  <td><input type=button value="View Close Stops" onClick="displayCloseStopsToStart()"></td>
                 </tr>
 		<tr>
-		  <td></td>
+		  <td><input type=button value="forTesting" onClick="test()"></td>
 		  <td></td>				
   	    </tr>
 	    <tr>
@@ -204,6 +204,10 @@ and open the template in the editor.
                       title: data[i].stop_id
                     });   
                   }                    
+                }
+                
+                function displayCloseStopsToStart(){
+                  displayCloseStops(start, radius);
                 }
                 
                 function displayCloseStops(center, r){    
