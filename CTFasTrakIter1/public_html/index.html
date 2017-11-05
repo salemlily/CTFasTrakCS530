@@ -37,13 +37,13 @@ and open the template in the editor.
 		  <td><input type=button value="save radius" onClick="setRadius()"></td>
                 </tr>		
                 <tr>
-		  <td><input type=button value="See All Busses" onClick="displayAllBusses()"></td>
+		  <td><input type=button value="View All Busses" onClick="displayAllBusses()"></td>
                   <td><input type=button value="View Close Busses" onClick="displayCloseBussesToStart()"></td>
 		  <td><input type=button value="View Close Stops" onClick="displayCloseStopsToStart()"></td>
                 </tr>
 		<tr>
-		  <td><input type=button value="forTesting" onClick="test()"></td>
-		  <td></td>				
+		  <td><input type=button value="for testing" onClick="test()"></td>
+		  <td><input type=button value="View All Stops" onClick="displayAllStops()"></td>				
   	    </tr>
 	    <tr>
 	    </tr>
@@ -54,15 +54,15 @@ and open the template in the editor.
         
         <script>
 		var theMap;  //global
+                var tansitLayer;
 		var centerLatLng;
 		var radius;
 		var start;
                 var allStops;
 		var end;
-                var busMarkers;
 	
 		function test(){
-		  update(JSON.stringify(getStopDataById("1")));		  
+		  //called when the 'for testing' button pushed 
 		}
 	
 	  	function initMap() {
@@ -72,22 +72,16 @@ and open the template in the editor.
 		    center: centerLatLng,
 		    mapTypeId: 'terrain' 
 		  }); 
+                  transitLayer = new google.maps.TransitLayer();
+                  transitLayer.setMap(theMap);
                   getAllStops();
-                  initBusMarkerArray();
 	        }
                 
                 function getAllStops(){
                   if (allStops === undefined)
                     allStops = readStaticData("stops");
                   return allStops;
-                }
-                
-                function initBusMarkerArray(){
-                  if (busMarkers === undefined){
-                    busMarkers = [];
-                  }
-                }
-		
+                }	
 		
 	        //String fileName must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
 	        //will return an object containing 
@@ -96,7 +90,7 @@ and open the template in the editor.
 		  req.open('GET', 'https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/' + fileName + 'JSON.txt', false);
 		  req.send(null);
 		
-		  if(req.status == 200){
+		  if(req.status === 200){
 		    var jsonString = req.responseText;		
 		    var dataObj = JSON.parse(jsonString);     
 
@@ -137,28 +131,31 @@ and open the template in the editor.
 		  }
 		}
 		
-		function getGeoCode(address){  
+		function getGeoCode(address){
+                //geocodes an address string returns the geocode JSON array
 		  address = address.replace(" ", "+");
 		  var req = new XMLHttpRequest();
 		  req.open('GET', 'https://maps.googleapis.com/maps/api/geocode/json?address=' + address 
 						+ '&key=AIzaSyBezkqLyMpXAF9dBb4X5rZeQkyF8Y5_Te4', false);
 		  req.send(null);
 		
-		  if(req.status == 200){
+		  if(req.status === 200){
 		    var rawString = req.responseText;
 		    var geoData = JSON.parse(rawString);
-		  }
-		  
+		  }		  
 		  return geoData;
 		}
 		
 		function update(message){
+                //only purpose of this method is to aid in tracing. 
+                //prints the argument message at the bottom of the webpage.
 		  var text = document.getElementById("testing").innerHTML;
 		  text = text + "<br>" + message;
 		  document.getElementById("testing").innerHTML = text;
 	        }
 		
 		function addMarker(latLng, labelText){
+                //adds a marker with the provided LatLng object
 		  new google.maps.Marker({
 		    map: theMap,
 			label: labelText,
@@ -166,11 +163,13 @@ and open the template in the editor.
 		  });
 		}
 		
-		function setRadius(){
+		function setRadius(){ //called on button push
+                //stores user entered radius in the global variable radius
 		  radius = document.userInput.radius.value * 1; //cast type to number
 		}
 		
                 function distance(pos1, pos2){  
+                //returns distance (in miles) between the two positions entered
 	        //both pos1 must be LatLng objects i.e. {lat: double, lng: double}
 		  var dist = google.maps.geometry.spherical.computeDistanceBetween(pos1, pos2); //in meters
 		  dist = dist / 1609.34; //convert to miles
@@ -187,6 +186,7 @@ and open the template in the editor.
 		
 		function displayCloseBusses(center, r){
 		//displays all busses that are within 'r' miles of 'center'
+                //'center' is a LatLng object
 		  var data = readRealTimeData(1).entity;
 		  var pos;
 		  for (i = 0; i < data.length; i++){
@@ -197,7 +197,9 @@ and open the template in the editor.
     	          }			
 		}
                 
-                function addBusMarker(bus, pos){                    
+                function addBusMarker(bus, pos){
+                //'bus' must be an element of the vehicle positions live feed array
+                //'pos' is the bus's position as a LatLng object
                   marker = new google.maps.Marker({
 		        map: theMap,
 		        position: pos,
@@ -209,10 +211,27 @@ and open the template in the editor.
 		    });
                     
                   marker.addListener('click', function(){
-                    update("clicked on bus: ");
-                    update(this.busId);
+                    //I know this is messy
+                    var busStop, trip, pos;
+                    var id = this.tripId;   //tripId of the Marker that was clicked
+                    var tripData = readRealTimeData(0).entity;
+                    var i = 0;
+                    //find the trip update that matches the trip id of the clicked bus
+                    while (id !== tripData[i].id) i++; 
+
+                    //this is the trip update we are interested in
+                    trip = tripData[i].trip_update.stop_time_update;
+
+                    i = 0;
+                    //skip the stops that the bus has already stopped at
+                    while (trip[i].departure === null) i++;
+                    
+                    for (j = i; j < trip.length; j++){
+                      busStop = getStopDataById(trip[j].stop_id);
+                      pos = new google.maps.LatLng(busStop.stop_lat*1, busStop.stop_lon*1);
+                      addStopMarker(busStop, pos);
+                    }
                   });
-                  busMarkers.push(marker);
                 }
 		
                 function displayAllStops(){
@@ -252,8 +271,6 @@ and open the template in the editor.
                     if (stops[i].stop_id === id)
                       return stops[i];
                   }
-                  update("ERROR: in getStopDataByID");
-                  update("stop id: " + id + " not found");
                 }
 
 		
