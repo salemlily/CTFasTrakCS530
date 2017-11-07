@@ -53,16 +53,16 @@ and open the template in the editor.
 	<p id="testing"> </p>
         
         <script>
-		var theMap;  //global
-                var tansitLayer;
-		var centerLatLng;
-		var radius;
-		var start;
-                var allStops;
-		var end;
-	
+		var theMap;  
+                var transitLayer;
+		var centerLatLng; //LatLng center of map LatLng
+		var radius;       //user entered radius
+		var start;        //LatLng user enterd start location 
+                var allStops;     //holds data from "stops.txt" for all stops as a JSON object
+		var end;          //LatLng user entered end location
+                var infowindow;
+        
 		function test(){
-		  //called when the 'for testing' button pushed 
 		}
 	
 	  	function initMap() {
@@ -72,10 +72,39 @@ and open the template in the editor.
 		    center: centerLatLng,
 		    mapTypeId: 'terrain' 
 		  }); 
-                  transitLayer = new google.maps.TransitLayer();
-                  transitLayer.setMap(theMap);
-                  getAllStops();
+                  showPlaces();
 	        }
+                
+                  function showPlaces(center, r){
+                    infowindow = new google.maps.InfoWindow();
+                    var service = new google.maps.places.PlacesService(theMap);
+                    update("PlacesService object created");
+                    service.nearbySearch({
+                      location: center,
+                      radius: r,
+                      type: ['store']
+                    }, callback);
+                  }
+
+                  function callback(results, status) {
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                      for (var i = 0; i < results.length; i++) {
+                        createMarker(results[i]);
+                      }
+                    }
+                  }
+
+                  function createMarker(place) {
+                    var marker = new google.maps.Marker({
+                      map: theMap,
+                      position: place.geometry.location
+                    });
+
+                    google.maps.event.addListener(marker, 'click', function() {
+                      infowindow.setContent(place.name);
+                      infowindow.open(theMap, this);
+                    });
+                  }
                 
                 function getAllStops(){
                   if (allStops === undefined)
@@ -158,8 +187,8 @@ and open the template in the editor.
                 //adds a marker with the provided LatLng object
 		  new google.maps.Marker({
 		    map: theMap,
-			label: labelText,
-			position: latLng
+                    label: labelText,
+		    position: latLng
 		  });
 		}
 		
@@ -233,7 +262,8 @@ and open the template in the editor.
                     }
                   });
                 }
-		
+                //function displayStopsOfBus()
+                
                 function displayAllStops(){
                   displayCloseStops(centerLatLng, 1000);          
                 }
@@ -261,7 +291,7 @@ and open the template in the editor.
                     title: stop.stop_id
                   });
                   marker.addListener('click', function(){
-                    theMap.setCenter(this.getPosition());
+                    showPlaces(this.position, 500);
                   });
                 }
 		
@@ -272,13 +302,30 @@ and open the template in the editor.
                       return stops[i];
                   }
                 }
+	
+               
 
-		
-		
+                function createMarker(place) {
+                  var placeLoc = place.geometry.location;
+                  var marker = new google.maps.Marker({
+                    map: theMap,
+                    position: placeLoc
+                  });
+
+                  google.maps.event.addListener(marker, 'click', function() {
+                    infowindow.setContent(place.name);
+                    infowindow.open(theMap, this);
+                  });
+                }
+                
+                
+
+          
 	</script>
 	
 	<script async defer
 		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBezkqLyMpXAF9dBb4X5rZeQkyF8Y5_Te4&libraries=geometry&callback=initMap">
 	</script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_9mrVl2c6FS59KEwhm5L55R08fcuF_V0&libraries=places&callback=initMap" async defer></script>
     </body>
 </html>
