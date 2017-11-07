@@ -45,7 +45,7 @@ and open the template in the editor.
 		  <td><input type=button value="View Close Places(to Start)" onClick="displayClosePlacesToStart()"></td>
 		  <td><input type=button value="View All Busses" onClick="displayAllBusses()"></td>
                   <td><input type=button value="View All Stops" onClick="displayAllStops()"></td>				
-  	    </tr>
+  	        </tr>
                   <td><input type=button value="for testing" onClick="test()"></td>
 	    <tr>
 	    </tr>
@@ -62,6 +62,7 @@ and open the template in the editor.
 		var start;        //LatLng user enterd start location 
                 var allStops;     //holds data from "stops.txt" for all stops as a JSON object
 		var end;          //LatLng user entered end location
+                var imgRoot = "http://maps.google.com/mapfiles/ms/micons/";
                 var infowindow;
         
 		function test(){
@@ -97,12 +98,12 @@ and open the template in the editor.
                 function callback(results, status) {
                   if (status === google.maps.places.PlacesServiceStatus.OK) {
                     for (var i = 0; i < results.length; i++) {
-                      createMarker(results[i]);
+                      createPlaceMarker(results[i]);
                     }
                   }
                 }
 
-                function createMarker(place) {
+                function createPlaceMarker(place) {
                   var marker = new google.maps.Marker({
                     map: theMap,
                     position: place.geometry.location
@@ -164,13 +165,15 @@ and open the template in the editor.
 		    var startGeoCode = getGeoCode(start);
 		      var pos = new google.maps.LatLng(startGeoCode.results[0].geometry.location.lat,
                                               startGeoCode.results[0].geometry.location.lng); //latitude longitude position
-		      addMarker(pos, "START");
+		      var greenMarker = imgRoot + "green.png";
+                      addMarker(pos, greenMarker);
 		      start = pos;
 		  }
 		  if (end !== ""){
 		    var endGeoCode = getGeoCode(end);
 		      var pos = endGeoCode.results[0].geometry.location; //latitude longitude position
-		      addMarker(pos, "END");
+                      var redMarker = imgRoot + "red.png";
+		      addMarker(pos, redMarker);
 		      end = pos;
 		  }
 		}
@@ -199,13 +202,13 @@ and open the template in the editor.
 		  document.getElementById("testing").innerHTML = text;
 	        }
 		
-		function addMarker(latLng, labelText){
+		function addMarker(latLng, imageType){
                 //latLng: LatLng
                 //labelText: string, to be displayd as label
 		  new google.maps.Marker({
 		    map: theMap,
-                    label: labelText,
-		    position: latLng
+		    position: latLng,
+                    icon: imageType
 		  });
 		}
 		
@@ -260,11 +263,11 @@ and open the template in the editor.
                   marker = new google.maps.Marker({
 		        map: theMap,
 		        position: pos,
-		        label: "Bus",
                         busId: bus.id,
                         tripId: bus.vehicle.trip.trip_id,
                         routeId: bus.vehicle.trip.route_id,
-                        title: bus.id
+                        title: bus.id,
+                        icon: "http://maps.google.com/mapfiles/ms/icons/bus.png"
 		    });
                     
                   marker.addListener('click', function(){
@@ -327,8 +330,8 @@ and open the template in the editor.
                   var marker = new google.maps.Marker({
                     map: theMap,
                     position: pos,
-                    label: stop.stop_id,
-                    title: stop.stop_id
+                    title: stop.stop_id,
+                    icon: imgRoot + "blue.png"
                   });
                   marker.addListener('click', function(){
                     displayPlaces(this.position, 500);
@@ -342,15 +345,14 @@ and open the template in the editor.
                     if (stops[i].stop_id === id)
                       return stops[i];
                   }
-                }
-	
-               
+                }               
 
-                function createMarker(place) {
+                function createPlaceMarker(place) {
                   var placeLoc = place.geometry.location;
                   var marker = new google.maps.Marker({
                     map: theMap,
-                    position: placeLoc
+                    position: placeLoc,
+                    icon: imgRoot + "orange.png"
                   });
 
                   google.maps.event.addListener(marker, 'click', function() {
