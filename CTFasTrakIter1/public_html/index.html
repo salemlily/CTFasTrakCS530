@@ -38,13 +38,14 @@ and open the template in the editor.
                 </tr>		
                 <tr>
 		  <td><input type=button value="View All Busses" onClick="displayAllBusses()"></td>
-                  <td><input type=button value="View Close Busses" onClick="displayCloseBussesToStart()"></td>
-		  <td><input type=button value="View Close Stops" onClick="displayCloseStopsToStart()"></td>
+                  <td><input type=button value="View Close Busses(to Start)" onClick="displayCloseBussesToStart()"></td>
+		  <td><input type=button value="View Close Stops(to Start)" onClick="displayCloseStopsToStart()"></td>
                 </tr>
 		<tr>
-		  <td><input type=button value="for testing" onClick="test()"></td>
+		  <td><input type=button value="View Close Places(to Start)" onClick="displayClosePlacesToStart()"></td>
 		  <td><input type=button value="View All Stops" onClick="displayAllStops()"></td>				
   	    </tr>
+                  <td><input type=button value="for testing" onClick="test()"></td>
 	    <tr>
 	    </tr>
 	  </table>
@@ -75,7 +76,11 @@ and open the template in the editor.
 		  }); 
 	        }
                 
-                function showPlaces(center, r){
+                function displayClosePlacesToStart(){
+                    displayPlaces(start, 3000);
+                }
+                
+                function displayPlaces(center, r){
                 //center: LatLng
                 //r: number, (meters)
                 //displays all Places (currently just stores), within r meters of center
@@ -325,7 +330,7 @@ and open the template in the editor.
                     title: stop.stop_id
                   });
                   marker.addListener('click', function(){
-                    showPlaces(this.position, 500);
+                    displayPlaces(this.position, 500);
                   });
                 }
 		
