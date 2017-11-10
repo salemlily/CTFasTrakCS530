@@ -64,7 +64,8 @@ and open the template in the editor.
 		var end;          //LatLng user entered end location
                 var imgRoot = "http://maps.google.com/mapfiles/ms/micons/";
                 var infowindow;
-        
+                
+                
 		function test(){
                 //executed when 'for testing' button pushed
 		}
@@ -74,7 +75,7 @@ and open the template in the editor.
 		  theMap = new google.maps.Map(document.getElementById('map'), {
 		    zoom: 9,
 		    center: centerLatLng,
-		    mapTypeId: 'terrain' 
+		    mapTypeId: 'satellite' 
 		  }); 
 	        }
                 
@@ -88,10 +89,11 @@ and open the template in the editor.
                 //displays all Places (currently just stores), within r meters of center
                   infowindow = new google.maps.InfoWindow();
                   var service = new google.maps.places.PlacesService(theMap);
+                  update("PlacesService object created");
                   service.nearbySearch({
                     location: center,
                     radius: r,
-                    type: ['store']
+                    type: ['restaurant']
                   }, callback);
                 }
 
@@ -100,6 +102,9 @@ and open the template in the editor.
                     for (var i = 0; i < results.length; i++) {
                       createPlaceMarker(results[i]);
                     }
+                  }
+                  else{
+                    update("Places request failed");
                   }
                 }
 
@@ -334,7 +339,7 @@ and open the template in the editor.
                     icon: imgRoot + "blue.png"
                   });
                   marker.addListener('click', function(){
-                    displayPlaces(this.position, 500);
+                    displayPlaces(this.position, 1000);
                   });
                 }
 		
