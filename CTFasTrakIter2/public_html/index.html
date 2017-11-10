@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      #map {
+        height: 600px;
+        width: 80%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+	
+    <form name = "userInput">
+      <table>
+        <tr>
+          <td>Enter current location:</td>
+          <td> <input type=text name=start size=30> <td>
+          <td><input type=button value="GO!" onClick="displayUserStartStopLoc()"></td>
+        </tr>
+        <tr>
+          <td>Enter destination location:</td>
+          <td><input type=text name=end size=30></td>	
+          <td></td>
+        </tr>
+        <tr>
+	  <td>Enter a search radius</td>
+          <td><input type=text name=radius size=30><td>
+          <td><input type=button value="save radius" onClick="setRadius()"></td>
+        </tr>		
+        <tr>
+           <td><input type=button value="View Close Places(to Start)" onClick="displayClosePlacesToStart()"></td>
+           <td><input type=button value="View Close Busses(to Start)" onClick="displayCloseBussesToStart()"></td>
+           <td><input type=button value="View Close Stops(to Start)" onClick="displayCloseStopsToStart()"></td>
+        </tr>
+        <tr>
+          <td><input type=button value="View Close Places(to Start)" onClick="displayClosePlacesToStart()"></td>
+          <td><input type=button value="View All Busses" onClick="displayAllBusses()"></td>
+          <td><input type=button value="View All Stops" onClick="displayAllStops()"></td>				
+        </tr>
+        <tr>
+          <td><input type=button value="for testing" onClick="test()"></td>
+	</tr>
+      </table>
+    </form>
+	
+    <p id="testing"> </p>
+        
+    <script>
+      var theMap;  
+      var centerLatLng; //LatLng center of map LatLng
+      var radius;       //user entered radius
+      var start;        //LatLng user enterd start location 
+      var allStops;     //holds data from "stops.txt" for all stops as a JSON object
+      var end;          //LatLng user entered end location
+      var imgRoot = "http://maps.google.com/mapfiles/ms/micons/";
+      var infoWindow;
+              
+      function test(){
+      //executed when 'for testing' button pushed
+      }
+		
+      function initMap() {
+        centerLatLng = new google.maps.LatLng(41.635768, -72.787725);
+        theMap = new google.maps.Map(document.getElementById('map'), {
+          zoom: 9,
+          center: centerLatLng,
+          mapTypeId: 'terrain' 
+        }); 
+      }
+					
+      function displayClosePlacesToStart(){
+        displayPlaces(start, 3000);
+      }
+					
+      function displayPlaces(center, r){
+      //center: LatLng
+      //r: number, (meters)
+      //displays all Places (currently just stores), within r meters of center
+        infowindow = new google.maps.InfoWindow();
+        var service = new google.maps.places.PlacesService(theMap);
+        service.nearbySearch({
+          location: center,
+          radius: r,
+          type: ['store']
+        }, callback);
+      }
+
+      function callback(results, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          update(JSON.stringify(results));
+          for (var i = 0; i < results.length; i++) {
+            createPlaceMarker(results[i]);
+          }
+        }
+      }
+
+      function createPlaceMarker(place) {
+        var marker = new google.maps.Marker({
+          map: theMap,
+          position: place.geometry.location
+        });
+
+        google.maps.event.addListener(marker, 'click', function() {
+          infowindow.setContent(place.name);
+          infowindow.open(theMap, this);
+        });
+      }
+                
+
+      function getAllStops(){
+      //returns JSON object of all bus stop data in "stops.txt"
+      //instantiates the object if null
+        if (allStops === undefined)
+          allStops = readStaticData("stops");
+        return allStops;
+      }	
+
+      function readStaticData(fileName){
+      //fileName: string, must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
+      //will return an array of JSON objects 
+        var req = new XMLHttpRequest();
+        req.open('GET', 'https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/' + fileName + 'JSON.txt', false);
+        req.send(null);
+
+        if(req.status === 200){
+          var jsonString = req.responseText;		
+          var dataObj = JSON.parse(jsonString);     
+          return dataObj;
+        }
+      }
+		
+      function readRealTimeData(n){
+      //n: number, must be an integer 0, 1, 2, 3 to indicate which of the live data streams to access
+      //will return an object containing the data from the feed specified
+        var feedType = ['tripupdate/tripupdates', 'vehicle/vehiclepositions', 'alert/alerts', 'externalfeed/trapezerealtimefeed'];
+        var req = new XMLHttpRequest();
+        req.open('GET', 'http://65.213.12.244/realtimefeed/' + feedType[n] + '.json', false);
+        req.send(null);
+
+        if(req.status === 200){
+          var rawString = req.responseText;	
+          var dataObj = JSON.parse(rawString);
+          return dataObj;
+        }
+        else
+          update("Could not return real time data.");
+      }
+		
+      function displayUserStartStopLoc(){
+      //executed when 'GO' button is pressed
+      //obtains the text from the text fields for start location and end location
+      //geocodes the text and displays a marker at each location entered
+        start = document.userInput.start.value;
+        end   = document.userInput.end.value;
+        if (start !== ""){ //if user entered something
+          var startGeoCode = getGeoCode(start);
+          var pos = new google.maps.LatLng(startGeoCode.results[0].geometry.location.lat,
+                      startGeoCode.results[0].geometry.location.lng); //latitude longitude position
+          var greenMarker = imgRoot + "green.png";
+          addMarker(pos, greenMarker);
+          start = pos;
+        }
+        if (end !== ""){
+          var endGeoCode = getGeoCode(end);
+          var pos = endGeoCode.results[0].geometry.location; //latitude longitude position
+          var redMarker = imgRoot + "red.png";
+          addMarker(pos, redMarker);
+          end = pos;
+        }
+      }
+
+      function getGeoCode(address){
+      //address: string
+      //geocodes an address string returns the geocode JSON array
+        address = address.replace(" ", "+");
+        var req = new XMLHttpRequest();
+        req.open('GET', 'https://maps.googleapis.com/maps/api/geocode/json?address=' + address 
+                       + '&key=AIzaSyBezkqLyMpXAF9dBb4X5rZeQkyF8Y5_Te4', false);
+        req.send(null);
+
+        if(req.status === 200){
+          var rawString = req.responseText;
+          var geoData = JSON.parse(rawString);
+        }		  
+        return geoData;
+      }
+		
+      function update(message){
+      //only purpose of this method is to aid in tracing. 
+      //prints the argument message at the bottom of the webpage.
+        var text = document.getElementById("testing").innerHTML;
+        text = text + "<br>" + message;
+        document.getElementById("testing").innerHTML = text;
+      }
+		
+      function addMarker(latLng, imageType){
+      //latLng: LatLng
+      //labelText: string, to be displayd as label
+        new google.maps.Marker({
+          map: theMap,
+          position: latLng,
+          icon: imageType
+        });
+      }
+		
+      function setRadius(){ 
+      //called on button push
+      //stores user entered radius in the global variable radius
+        radius = document.userInput.radius.value * 1; //cast type to number
+      }
+		
+      function distance(pos1, pos2){  
+      //pos1, pos2: LatLng     NO LatLng literals
+      //returns distance (in miles) between the two positions entered
+        var dist = google.maps.geometry.spherical.computeDistanceBetween(pos1, pos2); //in meters
+        dist = dist / 1609.34; //convert to miles
+        return dist;
+      }
+
+      function displayAllBusses(){
+      //might not be the best way to display all busses
+      //radius=75 is quite arbitrary
+        displayCloseBusses(centerLatLng, 75);
+      }
+		
+      function displayCloseBussesToStart(){
+      //executed when 'display close busses' button is pushed
+      //diplays all busses within 'radius' miles of the 'start' location
+      //'radius' is the user enterd radius
+      //'start' is the LatLng of the user entered start location
+        displayCloseBusses(start, radius);
+      }
+		
+      function displayCloseBusses(center, r){
+      //displays all busses that are within 'r' miles of 'center'
+      //center: LatLng 
+      //r: a number
+        var data = readRealTimeData(1).entity;
+        var pos;
+        for (i = 0; i < data.length; i++){
+          pos = new google.maps.LatLng(data[i].vehicle.position.latitude*1, 
+                                       data[i].vehicle.position.longitude*1);
+          if (distance(center, pos) < r){
+            addBusMarker(data[i], pos);
+          }                    
+        }			
+      }
+                
+      function addBusMarker(bus, pos){
+      //bus: JSON object, element of the vehicle positions live feed array
+      //pos: LatLng, the bus's position as a LatLng object
+      //displays the bus with a marker
+      //adds a listener to the marker so that when clicked, bus stops that this 
+      //bus will stop at are displayd with markers
+        marker = new google.maps.Marker({
+          map: theMap,
+          position: pos,
+          busId: bus.id,
+          tripId: bus.vehicle.trip.trip_id,
+          routeId: bus.vehicle.trip.route_id,
+          title: bus.id,
+          icon: "http://maps.google.com/mapfiles/ms/icons/bus.png"
+        });
+
+        marker.addListener('click', function(){
+        //I know this is messy, fix this soon
+          var busStop, trip, pos;
+          var id = this.tripId;   //tripId of the Marker that was clicked
+          var tripData = readRealTimeData(0).entity;
+          var i = 0;
+          //find the trip update that matches the trip id of the clicked bus
+          while (id !== tripData[i].id) 
+            i++; 
+
+          //this is the trip update we are interested in
+          trip = tripData[i].trip_update.stop_time_update;
+          i = 0;
+          //skip the stops in this trip that the bus has already visited at
+          while (trip[i].departure === null) 
+            i++;
+
+          //for each bus stop remaining, add a marker to display it
+          for (j = i; j < trip.length; j++){
+            busStop = getStopDataById(trip[j].stop_id);
+            pos = new google.maps.LatLng(busStop.stop_lat*1, busStop.stop_lon*1);
+            addStopMarker(busStop, pos);
+          }
+        });
+      }
+                
+      function displayAllStops(){
+        //might not be best way to display all stops
+        //75 is quite arbitrary
+        displayCloseStops(centerLatLng, 75);          
+      }
+                
+      function displayCloseStopsToStart(){
+      //displays all bus stops that are within 'radius' miles of 'start'
+      //start: LatLng of user enterd start location
+        displayCloseStops(start, radius);
+      }
+                
+      function displayCloseStops(center, r){
+      //displays all bus stops within 'r' miles of 'center'
+      //center: a LatLng
+      //r: a number
+        var data = getAllStops();
+        var pos;
+        for (i = 0; i < data.length; i++){
+          pos = new google.maps.LatLng(data[i].stop_lat*1, data[i].stop_lon*1);
+          if ( distance(center, pos) < r){
+            addStopMarker(data[i], pos);
+          }
+        }    
+      }
+                
+      function addStopMarker(stop, pos){
+      //adds a bus stop marker
+      //stop: a JSON object storing data for a bus stop from "stops.txt"
+      //pos: the LatLng of the stop
+        var marker = new google.maps.Marker({
+          map: theMap,
+          position: pos,
+          title: stop.stop_id,
+          icon: imgRoot + "blue.png"
+        });
+        marker.addListener('click', function(){
+          displayPlaces(this.position, 500);
+        });
+      }
+		
+      function getStopDataById(id){
+      //this could be made more efficient
+        var stops = getAllStops();
+        for (i = 0; i < stops.length; i++){
+          if (stops[i].stop_id === id)
+            return stops[i];
+        }
+      }               
+
+      function createPlaceMarker(place) {
+        var placeLoc = place.geometry.location;
+        var marker = new google.maps.Marker({
+          map: theMap,
+          position: placeLoc,
+          icon: imgRoot + "orange.png"
+        });
+
+        marker.addListener('click', function() {
+          infowindow.setContent(place.name);
+          infowindow.open(theMap, this);
+        });
+       }          
+    </script>
+	
+    <script async defer
+		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_9mrVl2c6FS59KEwhm5L55R08fcuF_V0&libraries=geometry,places&callback=initMap">
+    </script>
+  </body>
+</html>
