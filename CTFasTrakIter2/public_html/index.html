@@ -36,7 +36,7 @@
         overflow: auto;
       }
       #map {
-        height: 600px;
+        height: 580px;
         float: left;
         width: 70%;
       }
@@ -91,7 +91,7 @@
       var placeTypes = ["bus_station", "transit_station"]
               
       function test(){
-        update(JSON.stringify(theMap.getCenter()));
+      
       }
 
       function initMap() {
@@ -125,7 +125,7 @@
 
       function callback(results, status) {
         if (status === google.maps.places.PlacesServiceStatus.OK) {
-          update(JSON.stringify(results));
+          //update(JSON.stringify(results));
           for (var i = 0; i < results.length; i++) {
             createPlaceMarker(results[i]);
           }
