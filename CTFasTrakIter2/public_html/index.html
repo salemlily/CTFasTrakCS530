@@ -1,4 +1,13 @@
 <!DOCTYPE html>
+<!--
+    - separate functions for add bus marker and add click listener to bus marker
+    - add a clear all markers button?
+    - find a way to store all displayed markers?
+    - implement directions
+    - scrap some stories in favor of other better, more useful, easier to implement ones?
+    - add feature to select types of places?
+    - in function add place marker, use the icon provided in the Place object?
+-->
 
 <html>
   <head>
@@ -6,15 +15,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+      #directions-panel {
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 0px;
+      }
+      #directions-panel select, #directions-panel input {
+        font-size: 15px;
+      }
+      #directions-panel select {
+        width: 100%;
+      }
+      #directions-panel i {
+        font-size: 12px;
+      }
+      #directions-panel {
+        height: 600px;
+        float: right;
+        width: 25%;
+        overflow: auto;
+      }
       #map {
         height: 600px;
-        width: 80%;
+        float: left;
+        width: 70%;
       }
     </style>
   </head>
   <body>
     <div id="map"></div>
-	
+    <div id="directions-panel"></div>
+
     <form name = "userInput">
       <table>
         <tr>
@@ -25,7 +56,7 @@
         <tr>
           <td>Destination:</td>
           <td><input type=text name=end size=20></td>	
-          <td><input type = button value="Get Fastest Trip" onClick="getFastestTrip()"></td>
+          <td><input type = button value="Get Fastest Trip" onClick="calculateAndDisplayRoute()"></td>
         </tr>
         <tr>
 	  <td>Search Radius:</td>
@@ -41,11 +72,11 @@
           <td><input type=button value="View All Stops" onClick="displayAllStops()"></td>				
         </tr>
         <tr>
-          <!--td><input type=button value="for testing" onClick="test()"></td-->
+          <td><input type=button value="for testing" onClick="test()"></td>
 	</tr>
       </table>
     </form>
-	
+
     <p id="testing"> </p>
         
     <script>
@@ -57,13 +88,14 @@
       var allStops;               //holds data from "stops.txt" for all stops as an array of JSON object
       var imgRoot = "http://maps.google.com/mapfiles/ms/micons/";
       var infoWindow;
+      var placeTypes = ["bus_station", "transit_station"]
               
       function test(){
-      //executed when 'for testing' button pushed
+        update(JSON.stringify(theMap.getCenter()));
       }
-		
+
       function initMap() {
-        centerLatLng = new google.maps.LatLng(41.635768, -72.787725);
+        centerLatLng = new google.maps.LatLng(41.715775525674914, -72.68610146484376);
         theMap = new google.maps.Map(document.getElementById('map'), {
           zoom: 9,
           center: centerLatLng,
@@ -87,13 +119,13 @@
         service.nearbySearch({
           location: center,
           radius: r,
-          type: ['restaurant']
+          type: placeTypes
         }, callback);
       }
 
       function callback(results, status) {
         if (status === google.maps.places.PlacesServiceStatus.OK) {
-          //update(JSON.stringify(results));
+          update(JSON.stringify(results));
           for (var i = 0; i < results.length; i++) {
             createPlaceMarker(results[i]);
           }
@@ -180,10 +212,7 @@
 
       //========================================================================
       //                        READ DATA
-      //========================================================================
-      //for more information on XMLHttpRequest object,
-      //see: https://www.w3schools.com/xml/ajax_xmlhttprequest_response.asp
-      
+      //========================================================================      
       function readStaticData(fileName){
       //fileName: string, must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
       //will return an array of JSON objects 
@@ -207,17 +236,6 @@
           var url = 'http://65.213.12.244/realtimefeed/' + feedType[n] + '.json';
           return makeXMLHttpRequest(url);
         }
-      }
-      
-      function makeXMLHttpRequest(url){
-        var req = new XMLHttpRequest();
-        req.open('GET', url, false);
-        req.send(null);        
-        if(req.status === 200){
-          return JSON.parse(req.responseText);
-        }else{
-          return null;
-        }    
       }
       //************************************************************************
       
@@ -348,6 +366,19 @@
       //========================================================================
       //                    GENERAL UTILITIES
       //========================================================================
+      function makeXMLHttpRequest(url){
+      //for more information on XMLHttpRequest object,
+      //see: https://www.w3schools.com/xml/ajax_xmlhttprequest_response.asp
+        var req = new XMLHttpRequest();
+        req.open('GET', url, false);
+        req.send(null);        
+        if(req.status === 200){
+          return JSON.parse(req.responseText);
+        }else{
+          return null;
+        }    
+      }
+      
       function distance(pos1, pos2){  
       //pos1, pos2: LatLng     NO LatLng literals
       //returns distance (in miles) between the two positions entered
@@ -368,15 +399,35 @@
       //address: string
       //geocodes an address string returns the geocode JSON array
         address = address.replace(" ", "+");
-        var url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + address 
-                       + '&components=state:CT&key=AIzaSyBezkqLyMpXAF9dBb4X5rZeQkyF8Y5_Te4';  
+        var url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' 
+           + address + '&components=state:CT&key=AIzaSyBezkqLyMpXAF9dBb4X5rZeQkyF8Y5_Te4';  
         return makeXMLHttpRequest(url);
       }
       //************************************************************************
-      
-       function getFastestTrip(){
-         update("Fastest Trip doesn't work yet");
+       
+       function calculateAndDisplayRoute() {
+         var directionsService = new google.maps.DirectionsService();
+         var directionsRendererOptions = {
+           map: theMap,
+           panel: document.getElementById("directions-panel"),
+           hideRouteList: false,
+           preserveViewPort: false
+         };
+         var directionsRenderer = new google.maps.DirectionsRenderer(directionsRendererOptions);
+         
+         directionsService.route({
+           origin: startPos,
+           destination: endPos,
+           travelMode: 'TRANSIT'
+         }, function(response, status) {
+           if (status === 'OK') {
+             directionsRenderer.setDirections(response);
+           } else {
+             window.alert('Directions request failed due to ' + status);
+           }
+         });
        }
+
     </script>
 	
     <script async defer
