@@ -91,7 +91,7 @@
       var placeTypes = ["bus_station", "transit_station"]
               
       function test(){
-      
+          
       }
 
       function initMap() {
@@ -216,11 +216,12 @@
       function readStaticData(fileName){
       //fileName: string, must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
       //will return an array of JSON objects 
-        var validFileNames = ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"];
+        var validFileNames = ["routes", "shapesOrdered", "stops", "stop_times", "stops", "trips"];
         if (validFileNames.indexOf(fileName) === -1)
           return null;
         else{
-          var url = 'https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/' + fileName + 'JSON.txt'
+          var url = 'https://media.githubusercontent.com/media/jmluczy/CTFasTrakCS530/static-data/' + fileName + 'JSON.txt';
+          //var url = 'https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/' + fileName + 'JSON.txt'
           return makeXMLHttpRequest(url);        
         }
       }
