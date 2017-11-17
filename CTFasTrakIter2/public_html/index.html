@@ -91,9 +91,8 @@
       var placeTypes = ["bus_station", "transit_station"]
               
       function test(){
-          var stopsRaw = $.getJSON("../CTFasTrakIter2/Static Data/stops.json");
-          var stops = eval(stopsRaw.responseText);
-          update(JSON.stringify(stops));
+          var shapes = readStaticData("shapes_ordered");
+          update(JSON.parse(shapes));
       }
 
       function initMap() {
@@ -223,7 +222,6 @@
           return null;
         else{
           var url = 'https://raw.githubusercontent.com/jmluczy/CTFasTrakCS530/static-data/' + fileName + '.json';
-          //var url = 'https://media.githubusercontent.com/media/jmluczy/CTFasTrakCS530/static-data/' + fileName + '.json';
           //var url = 'https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/' + fileName + 'JSON.txt'
           return makeXMLHttpRequest(url);        
         }
@@ -331,12 +329,12 @@
       //bus will stop at are displayd with markers
         marker = new google.maps.Marker({
           map: theMap,
-          position: pos,
-          busId: bus.id,
-          tripId: bus.vehicle.trip.trip_id,
-          routeId: bus.vehicle.trip.route_id,
-          title: bus.id,
-          icon: "http://maps.google.com/mapfiles/ms/icons/bus.png"
+          position: pos//,
+          //busId: bus.id,
+          //tripId: bus.vehicle.trip.trip_id,
+          //routeId: bus.vehicle.trip.route_id,
+          //title: bus.id,
+          //icon: "http://maps.google.com/mapfiles/ms/icons/bus.png"
         });
 
         marker.addListener('click', function(){
@@ -381,6 +379,7 @@
           return JSON.parse(req.responseText);
           update("JSON parse complete");
         }else{
+          update("null returned");
           return null;
         }    
       }
