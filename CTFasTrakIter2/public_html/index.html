@@ -72,6 +72,7 @@
           <td><input type=button value="View All Stops" onClick="displayAllStops()"></td>				
         </tr>
         <tr>
+            <td><input type="text" name="testInput" size="20"></td>
           <td><input type=button value="for testing" onClick="test()"></td>
 	</tr>
       </table>
@@ -88,11 +89,12 @@
       var allStops;               //holds data from "stops.txt" for all stops as an array of JSON object
       var imgRoot = "http://maps.google.com/mapfiles/ms/micons/";
       var infoWindow;
-      var placeTypes = ["bus_station", "transit_station"]
+      var placeTypes = ["restaurant"];
               
       function test(){
-          var shapes = readStaticData("shapes_ordered");
-          update(JSON.parse(shapes));
+        var testVal = document.userInput.testInput.value;
+        var t = getRouteAndShapeOfTrip(testVal);
+        update(JSON.stringify(t));
       }
 
       function initMap() {
@@ -103,6 +105,21 @@
           mapTypeId: 'terrain' 
         }); 
       }      
+      
+      function getStopTimesByStopId(stopId){
+        var url = "https://raw.githubusercontent.com/jmluczy/CTFasTrakCS530/big-files/"
+        if (stopId <= "2550")
+            url += "stop_times_1-2550_json.txt";
+        else if (stopId <= "7708")
+            url += "stop_times_2551-7708_json.txt";
+        else
+            url += "stop_times_7709_json.txt";
+        return makeXMLHttpRequest(url);
+      }
+      
+      function getStopTimesByTripId(tripId){
+          
+      }
       
       //========================================================================
       //                         PLACES
@@ -201,8 +218,22 @@
       }
 		
       function getStopDataById(id){
-      //this could be made more efficient
+      //returns all stop data from stops.txt file
+      //for the stop with the provided stop_id 
         var stops = getAllStops();
+        var lo = 0;
+        var hi = stops.length-1;
+        var mid;
+        while (lo <= hi){
+          mid = Math.floor((lo+hi)/2);
+          if (id === stops[mid].stop_id)
+            return stops[mid];
+          if (id < stops[mid].stop_id)
+            hi = mid - 1;
+          else
+            lo = mid + 1;
+        }
+        
         for (i = 0; i < stops.length; i++){
           if (stops[i].stop_id === id)
             return stops[i];
@@ -217,11 +248,14 @@
       function readStaticData(fileName){
       //fileName: string, must be one of ["agency", "calendar", "calendar_dates", "routes", "shapes", "stop_times", "stops", "trips"]
       //will return an array of JSON objects 
-        var validFileNames = ["routes", "shapes_ordered", "stops", "trips"];//stop_times doesn't 
-        if (validFileNames.indexOf(fileName) === -1)
+        var smallFileNames = ["routes", "shapes", "stops", "trips"];//stop_times doesn't 
+        if (smallFileNames.indexOf(fileName) === -1){
+          update("not a valid static file name");
           return null;
+        }
         else{
-          var url = 'https://raw.githubusercontent.com/jmluczy/CTFasTrakCS530/static-data/' + fileName + '.json';
+            //       https://raw.githubusercontent.com/jmluczy/CTFasTrakCS530/static-data/   stops        _json.txt
+          var url = 'https://raw.githubusercontent.com/jmluczy/CTFasTrakCS530/static-data/' + fileName + '_json.txt';
           //var url = 'https://raw.githubusercontent.com/jmluczy/TBDs-CTFasTrak-Project/static-data/version1/CTFasTrakStaticData/' + fileName + 'JSON.txt'
           return makeXMLHttpRequest(url);        
         }
@@ -289,6 +323,8 @@
           }
         }
       }
+      //************************************************************************
+      
       //========================================================================
       //                           BUSSES
       //========================================================================
@@ -364,6 +400,98 @@
       }
       //************************************************************************
       
+      //========================================================================
+      //                        ROUTES
+      //========================================================================
+      function drawShape(shapeID, pointInSequence){
+        shapeID += "";  //coerce to string
+        pointInSequence += 0; //coerce to nubmer
+        var shapes = readStaticData("shapes");
+        var i = 0;
+        var latLngPoints = [];
+        while (shapes[i].shape_id !== shapeID) i++;
+        while (shapes[i].shape_id === shapeID && shapes[i].shape_pt_sequence < pointInSequence*1) i++;
+        while (shapes[i].shape_id === shapeID){
+          latLngPoints.push(new google.maps.LatLng(shapes[i].shape_pt_lat*1, shapes[i].shape_pt_lon*1));
+          update(JSON.stringify(shapes[i]));
+          i++;
+        }
+        theMap.setCenter(latLngPoints[0]);
+        new google.maps.Polyline({
+          strokeColor: "A400A4",
+          path: latLngPoints, 
+          map: theMap
+        });
+      }
+      /*
+      function getRouteAndShapeOfTrip(tripId){
+      //reads the 'trips' static data file, searches for the record which contains
+      //matching 'tripId' 'trip_id'
+      //returns 'route_id' and 'shape_id' of that record
+        var trips = readStaticData("trips");
+        var i = 0;
+        while (i < trips.length & trips[i].trip_id !== tripId) i++;
+        return {route_id: trips[i].route_id, shape_id: trips[i].shape_id};
+      }
+      */
+      function getRouteAndShapeOfTrip(tripId){
+        var trips = readStaticData("trips");
+        var lo = 0;
+        var hi = trips.length-1;
+        var mid;
+        while (lo <= hi){
+          mid = Math.floor((lo+hi)/2);
+          if (tripId === trips[mid].trip_id)
+            return {route_id: trips[mid].route_id, shape_id: trips[mid].shape_id};
+          else if (tripId < trips[mid].trip_id)
+            hi = mid - 1;
+          else
+            lo = mid + 1;
+        }
+      }
+      
+      function getPointsOfShape(shapeId){
+      //reads the 'shapes' static data file, searches for the records which match
+      //provided 'shapeId' returns an array of LatLng objects
+      //*****NOTE**** 
+      //in shapes.txt, shape_id are stored as strings but sorted by numeric value,
+      //coerce them to numbers
+        var key = shapeId*1;  //coerce to number
+        var shapes = readStaticData("shapes");
+        var points = [];
+        var lo = 0; 
+        var hi = shapes.length-1;
+        var mid, id;
+        
+        //find index that has the shapeId quickly
+        while (lo <= hi){
+          mid = Math.floor((lo+hi)/2);
+          id = shapes[mid].shape_id*1;
+          if (key === id)
+            break;
+          else if (key < id)
+            hi = mid - 1;
+          else 
+            lo = mid + 1;
+        }
+        update(shapes[mid].shape_id);
+        
+        //now back up (decrease index) until you hit the first record with the shapeId
+        var i = mid;
+        while (i >= 0 && shapeId === shapes[i].shape_id)
+          i--;
+        //went one too far so increment i, 
+        if (i !== 0) i++;
+        while (shapes[i].shape_id === shapeId){
+          points.push(
+            new google.maps.LatLng(shapes[i].shape_pt_lat, shapes[i].shape_pt_lon)
+          );
+          i++;
+        }
+        update(points.length);
+        return points;
+      }
+      
       
       //========================================================================
       //                    GENERAL UTILITIES
@@ -375,9 +503,8 @@
         req.open('GET', url, false);
         req.send(null);        
         if(req.status === 200){
-          update("about to JSON parse");
+          //update(req.responseText);
           return JSON.parse(req.responseText);
-          update("JSON parse complete");
         }else{
           update("null returned");
           return null;
@@ -426,6 +553,7 @@
            travelMode: 'TRANSIT'
          }, function(response, status) {
            if (status === 'OK') {
+             update(JSON.stringify(response));
              directionsRenderer.setDirections(response);
            } else {
              window.alert('Directions request failed due to ' + status);
