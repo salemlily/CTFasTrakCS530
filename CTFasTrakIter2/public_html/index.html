@@ -93,8 +93,7 @@
               
       function test(){
         var testVal = document.userInput.testInput.value;
-        var t = getRouteAndShapeOfTrip(testVal);
-        update(JSON.stringify(t));
+        drawShape(testVal, 1);
       }
 
       function initMap() {
@@ -403,23 +402,13 @@
       //========================================================================
       //                        ROUTES
       //========================================================================
-      function drawShape(shapeID, pointInSequence){
-        shapeID += "";  //coerce to string
-        pointInSequence += 0; //coerce to nubmer
-        var shapes = readStaticData("shapes");
-        var i = 0;
-        var latLngPoints = [];
-        while (shapes[i].shape_id !== shapeID) i++;
-        while (shapes[i].shape_id === shapeID && shapes[i].shape_pt_sequence < pointInSequence*1) i++;
-        while (shapes[i].shape_id === shapeID){
-          latLngPoints.push(new google.maps.LatLng(shapes[i].shape_pt_lat*1, shapes[i].shape_pt_lon*1));
-          update(JSON.stringify(shapes[i]));
-          i++;
-        }
-        theMap.setCenter(latLngPoints[0]);
+      function drawShape(shapeId, pointInSequence){
+        var points = getPointsOfShape(shapeId);
+        points = points.slice(pointInSequence-1, points.length);
+        theMap.setCenter(points[0]);
         new google.maps.Polyline({
           strokeColor: "A400A4",
-          path: latLngPoints, 
+          path: points, 
           map: theMap
         });
       }
