@@ -72,7 +72,7 @@
           <td><input type=button value="View All Stops" onClick="displayAllStops()"></td>				
         </tr>
         <tr>
-            <td><input type="text" name="testInput" size="20"></td>
+          <td><input type="text" name="testInput" size="20"></td>
           <td><input type=button value="for testing" onClick="test()"></td>
 	</tr>
       </table>
@@ -93,7 +93,11 @@
               
       function test(){
         var testVal = document.userInput.testInput.value;
-        drawShape(testVal, 1);
+        //var t = getStopTimeDataByStopId(testVal);
+        //drawShape(testVal, 1);
+        var d = new Date();
+        var thisMorning = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        update(JSON.stringify(thisMorning));
       }
 
       function initMap() {
@@ -105,20 +109,8 @@
         }); 
       }      
       
-      function getStopTimesByStopId(stopId){
-        var url = "https://raw.githubusercontent.com/jmluczy/CTFasTrakCS530/big-files/"
-        if (stopId <= "2550")
-            url += "stop_times_1-2550_json.txt";
-        else if (stopId <= "7708")
-            url += "stop_times_2551-7708_json.txt";
-        else
-            url += "stop_times_7709_json.txt";
-        return makeXMLHttpRequest(url);
-      }
-      
-      function getStopTimesByTripId(tripId){
-          
-      }
+
+
       
       //========================================================================
       //                         PLACES
@@ -403,6 +395,7 @@
       //                        ROUTES
       //========================================================================
       function drawShape(shapeId, pointInSequence){
+      //Draws shape of given shapeId from pointInSequence forward
         var points = getPointsOfShape(shapeId);
         points = points.slice(pointInSequence-1, points.length);
         theMap.setCenter(points[0]);
@@ -412,17 +405,7 @@
           map: theMap
         });
       }
-      /*
-      function getRouteAndShapeOfTrip(tripId){
-      //reads the 'trips' static data file, searches for the record which contains
-      //matching 'tripId' 'trip_id'
-      //returns 'route_id' and 'shape_id' of that record
-        var trips = readStaticData("trips");
-        var i = 0;
-        while (i < trips.length & trips[i].trip_id !== tripId) i++;
-        return {route_id: trips[i].route_id, shape_id: trips[i].shape_id};
-      }
-      */
+
       function getRouteAndShapeOfTrip(tripId){
         var trips = readStaticData("trips");
         var lo = 0;
@@ -481,6 +464,27 @@
         return points;
       }
       
+      function getStopTimeDataByStopId(stopId){
+      //Currently stop_times file is partitioned into 4 files to accommodate github's preference for small files
+      //stop_times files partitioned by stop_id
+      // [1, 2130]    [2131, 4337]    [4339, 8471]    [8472, ]
+        var id = stopId*1; //coerce to number
+        var url = "https://raw.githubusercontent.com/jmluczy/CTFasTrakCS530/big-files/stop_times_";
+        if (id <= 4377){
+          if (id <= 2130)                
+            url += 1;
+          else
+            url += 2;
+        }else{
+          if (id <= 8471)
+            url += 3;
+          else
+            url += 4;
+        }
+        url += "_json.txt";
+        return makeXMLHttpRequest(url);
+      }
+      
       
       //========================================================================
       //                    GENERAL UTILITIES
@@ -498,6 +502,17 @@
           update("null returned");
           return null;
         }    
+      }
+      
+      function isInNearFuture(time, windowLength){
+      //returns true if 'time' is less than 'windowLength' hours in the future
+        var time = time.split(":");
+        update(JSON.stringify(time));
+        var now = new Date().getTime();
+        var futureTime = new Date(1970, 0, 1, time[0]*1, time[1]*1, time[2]*1, 0);
+        update(JSON.stringify(now));
+        var futureTime = new Date(now.toLocalDate() + time).valueOf();
+        update(JSON.stringify(futureTime));
       }
       
       function distance(pos1, pos2){  
