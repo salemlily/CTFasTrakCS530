@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!--
     - separate functions for add bus marker and add click listener to bus marker
     - add a clear all markers button?
@@ -8,7 +8,13 @@
     - add feature to select types of places?
     - in function add place marker, use the icon provided in the Place object?
 -->
+<?php
+$servername = "localhost";
+$username = "guest";
+$password = "password";
 
+$connect = new mysqli($servername, $username, $password)
+?>
 <html>
   <head>
     <meta charset="UTF-8">
