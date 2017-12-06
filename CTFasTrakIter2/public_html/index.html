@@ -256,7 +256,7 @@
       //r: a number
         var data = getAllStops();
         var pos;
-        for (i = 0; i < data.length; i++){
+        for (var i = 0; i < data.length; i++){
           pos = new google.maps.LatLng(data[i].stop_lat*1, data[i].stop_lon*1);
           if ( distance(center, pos) < r){
             addStopMarker(data[i], pos, mapVisibleKey);
@@ -298,7 +298,7 @@
             lo = mid + 1;
         }
         
-        for (i = 0; i < stops.length; i++){
+        for (var i = 0; i < stops.length; i++){
           if (stops[i].stop_id === id)
             return stops[i];
         }
@@ -423,7 +423,7 @@
       //r: a number
         var data = readRealTimeData(1).entity;
         var pos;
-        for (i = 0; i < data.length; i++){
+        for (var i = 0; i < data.length; i++){
           pos = new google.maps.LatLng(data[i].vehicle.position.latitude*1, 
                                        data[i].vehicle.position.longitude*1);
           if (distance(center, pos) < r){
@@ -468,7 +468,7 @@
             i++;
 
           //for each bus stop remaining, add a marker to display it
-          for (j = i; j < trip.length; j++){
+          for (var j = i; j < trip.length; j++){
             busStop = getStopDataById(trip[j].stop_id);
             pos = new google.maps.LatLng(busStop.stop_lat*1, busStop.stop_lon*1);
             addStopMarker(busStop, pos);
