@@ -70,7 +70,36 @@
         update(JSON.stringify(start.position));
       }
       
-
+      //========================================================================
+      //                  QUERIES
+      //    Nearly all query functions should return an array of JSON objects
+      //    I can help with turning what ever the query returns into an array of JSON objects
+      //========================================================================
+      
+      function shapesFromShapeId(shapeId){ //Purpose: shape_pt_lat, shape_pt_lon
+      //FROM 'shapes_json' File/Table
+      //GET  all records such that       shape_id = shapeId
+      //Return an array of JSON objects
+      }
+      
+      function stopTimesFromStopId(stopId){ //Purpose: trip_id
+      //FROM 'stop_times_json' File/Table     
+      //GET all records such that        stop_id = stopId
+      //Return an array of JSON objects
+      }
+      
+      function tripsFromTripId(tripId){  //Purpose: shape_id
+      //FROM 'trips_json' File/Table
+      //GET all records such that         trip_id = tripId
+      //Return an array of JSON objects      (I think search should yield 1 object)
+      }
+      
+      function routesFromRouteId(routeId){ //Purpose: route_color
+      //FROM 'routes_json' File/Table
+      //GET all records such that        route_id = routeId
+      //Return an array of JSON objects     (I think search should yield 1 object)
+      }
+      //************************************************************************
       
       function remove(){
         if (mapVisible.length > 0){
