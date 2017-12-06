@@ -1,10 +1,8 @@
 ﻿<!DOCTYPE html>
 <!--
+    - investigate why 'trip info' button requires being pressed twice
     - separate functions for add bus marker and add click listener to bus marker
-    - add a clear all markers button?
     - find a way to store all displayed markers?
-    - implement directions
-    - scrap some stories in favor of other better, more useful, easier to implement ones?
     - add feature to select types of places?
     - in function add place marker, use the icon provided in the Place object?
 -->
@@ -36,12 +34,12 @@ $connect = new mysqli($servername, $username, $password)
       }
       #directions-panel {
         height: 600px;
-        float: right;
-        width: 25%;
+        float: center;
+        width: 400px;
         overflow: auto;
       }
       #map {
-        height: 700px;
+        height: 640px;
         float: left;
         width: 100%;
       }
@@ -49,29 +47,18 @@ $connect = new mysqli($servername, $username, $password)
   </head>
   <body>
     <div id="map"></div>
-    <div id="directions-panel"></div>
     <div id="toggle-button"><input type="button" value="toggle" onClick="toggleUI(userInterfaceVisible)"></div>
     
     <form name = "userInput"></form>
-    <form name ="testing">
-      <table>
-        <tr>
-          <td><input type=button value="View All Busses" onClick="displayAllBusses()"></td>
-          <td><input type=button value="View All Stops" onClick="displayAllStops()"></td>				
-        </tr>
-        <tr>
-          <td><input type="text" name="testInput" size="20"></td>
-          <td><input type=button value="for testing" onClick="test()"></td>
-	</tr>
-      </table>
-    </form>
+    <div id="directions-panel"> </div>
+    <form name ="testingForm"></form>
     
     <p id="testing"> </p>
         
     <script>
       var theMap;  
       var centerLatLng; //LatLng center of map LatLng
-      var DEFAULT_RADIUS = 5;
+      var DEFAULT_RADIUS = 3;
       var start = {position: null, text: null, marker: null};        //User entered start position string, corresponding LatLng
       var end = {position: null, text: null, marker: null};            //User entered end position string, corresponding LatLng
       var allStops;               //holds data from "stops.txt" for all stops as an array of JSON object
@@ -80,12 +67,45 @@ $connect = new mysqli($servername, $username, $password)
       var userInterfaceVisible = false;
       var mapVisible = [];  //maintains references to all markers polylines that are visible on map so that they can be deleted
       var mapVisibleKey = 0;
+      var directionsService;
+      var directionsRenderer;
       
       function test(){
         //toggleUI(userInterfaceVisible);
         //update(start===undefined);
         update(JSON.stringify(start.position));
       }
+      
+      //========================================================================
+      //                  QUERIES
+      //    Nearly all query functions should return an array of JSON objects
+      //    I can help with turning what ever the query returns into an array of JSON objects
+      //========================================================================
+      
+      function shapesFromShapeId(shapeId){ //Purpose: shape_pt_lat, shape_pt_lon
+      //FROM 'shapes_json' File/Table
+      //GET  all records such that       shape_id = shapeId
+      //Return an array of JSON objects
+      }
+      
+      function stopTimesFromStopId(stopId){ //Purpose: trip_id
+      //FROM 'stop_times_json' File/Table     
+      //GET all records such that        stop_id = stopId
+      //Return an array of JSON objects
+      }
+      
+      function tripsFromTripId(tripId){  //Purpose: shape_id
+      //FROM 'trips_json' File/Table
+      //GET all records such that         trip_id = tripId
+      //Return an array of JSON objects      (I think search should yield 1 object)
+      }
+      
+      function routesFromRouteId(routeId){ //Purpose: route_color
+      //FROM 'routes_json' File/Table
+      //GET all records such that        route_id = routeId
+      //Return an array of JSON objects     (I think search should yield 1 object)
+      }
+      //************************************************************************
       
       function remove(){
         if (mapVisible.length > 0){
@@ -100,9 +120,9 @@ $connect = new mysqli($servername, $username, $password)
       function toggleUI(visible){
         if (visible){ //make invisible
           document.userInput.innerHTML="";
+          document.testingForm.innerHTML="";
         }else{ //make visible
-          document.userInput.innerHTML = `
-            <form name = "userInput">
+          document.userInput.innerHTML = `            
               <table>
                 <tr> 
                   <td>
@@ -126,8 +146,21 @@ $connect = new mysqli($servername, $username, $password)
                   </td>
                 </tr>
               </table>
-            </form>
           `;
+            /*  commented out WANT TO SEE WHAT WE HAVE ON MOBILE
+          document.testingForm.innerHTML = `
+            <table>
+              <tr>
+                <td><input type=button value="View All Busses" onClick="displayAllBusses()"></td>
+                <td><input type=button value="View All Stops" onClick="displayAllStops()"></td>				
+              </tr>
+              <tr>
+                <td><input type="text" name="testInput" size="20"></td>
+                <td><input type=button value="for testing" onClick="test()"></td>
+              </tr>
+            </table>
+          `;
+           */
         }
         userInterfaceVisible = !userInterfaceVisible;
       }
@@ -149,6 +182,8 @@ $connect = new mysqli($servername, $username, $password)
         theMap.controls[google.maps.ControlPosition.TOP_LEFT].push(div);
         div = document.getElementById("toggle-button");
         theMap.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(div);
+        div = document.getElementById("directions-panel");
+        //theMap.controls[google.maps.ControlPosition.TOP_RIGHT].push(div);
       }
       
       //========================================================================
@@ -227,7 +262,7 @@ $connect = new mysqli($servername, $username, $password)
       //r: a number
         var data = getAllStops();
         var pos;
-        for (i = 0; i < data.length; i++){
+        for (var i = 0; i < data.length; i++){
           pos = new google.maps.LatLng(data[i].stop_lat*1, data[i].stop_lon*1);
           if ( distance(center, pos) < r){
             addStopMarker(data[i], pos, mapVisibleKey);
@@ -269,7 +304,7 @@ $connect = new mysqli($servername, $username, $password)
             lo = mid + 1;
         }
         
-        for (i = 0; i < stops.length; i++){
+        for (var i = 0; i < stops.length; i++){
           if (stops[i].stop_id === id)
             return stops[i];
         }
@@ -303,13 +338,17 @@ $connect = new mysqli($servername, $username, $password)
         if (n < 0 || n > 4)
           return null;
         else{
-          var feedType = ['tripupdate/tripupdates', 'vehicle/vehiclepositions', 'alert/alerts', 'externalfeed/trapezerealtimefeed'];
-          var url = 'http://65.213.12.244/realtimefeed/' + feedType[n] + '.json';
+          //var feedType = ['tripupdate/tripupdates', 'vehicle/vehiclepositions', 'alert/alerts', 'externalfeed/trapezerealtimefeed'];
+          //var url = 'http://65.213.12.244/realtimefeed/' + feedType[n] + '.json';
+          var feedType = ['tripupdates', 'vehiclepositions', 'alerts', 'combined'];
+          var url = 'https://raw.githubusercontent.com/jmluczy/CTFasTrakCS530/real-time-data-sample/' + feedType[n] + '.txt';
           return makeXMLHttpRequest(url);
         }
       }
       //************************************************************************
-      
+      //========================================================================
+      //
+      //========================================================================
       
       //========================================================================
       //                     READING USER INPUT
@@ -390,32 +429,34 @@ $connect = new mysqli($servername, $username, $password)
       //r: a number
         var data = readRealTimeData(1).entity;
         var pos;
-        for (i = 0; i < data.length; i++){
+        for (var i = 0; i < data.length; i++){
           pos = new google.maps.LatLng(data[i].vehicle.position.latitude*1, 
                                        data[i].vehicle.position.longitude*1);
           if (distance(center, pos) < r){
-            addBusMarker(data[i], pos);
+            addBusMarker(data[i], pos, mapVisibleKey);
           }                    
-        }			
+        }
+        mapVisibleKey++;
       }
                 
-      function addBusMarker(bus, pos){
+      function addBusMarker(bus, pos, _key){
       //bus: JSON object, element of the vehicle positions live feed array
       //pos: LatLng, the bus's position as a LatLng object
       //displays the bus with a marker
       //adds a listener to the marker so that when clicked, bus stops that this 
       //bus will stop at are displayd with markers
-        marker = new google.maps.Marker({
+        newMarker = new google.maps.Marker({
           map: theMap,
-          position: pos//,
-          //busId: bus.id,
-          //tripId: bus.vehicle.trip.trip_id,
-          //routeId: bus.vehicle.trip.route_id,
+          position: pos,
+          busId: bus.id,
+          tripId: bus.vehicle.trip.trip_id,
+          routeId: bus.vehicle.trip.route_id,
           //title: bus.id,
-          //icon: "http://maps.google.com/mapfiles/ms/icons/bus.png"
+          icon: "http://maps.google.com/mapfiles/ms/icons/bus.png"
         });
+        mapVisible.push({key: _key, marker: newMarker});
 
-        marker.addListener('click', function(){
+        newMarker.addListener('click', function(){
         //I know this is messy, fix this soon
           var busStop, trip, pos;
           var id = this.tripId;   //tripId of the Marker that was clicked
@@ -433,7 +474,7 @@ $connect = new mysqli($servername, $username, $password)
             i++;
 
           //for each bus stop remaining, add a marker to display it
-          for (j = i; j < trip.length; j++){
+          for (var j = i; j < trip.length; j++){
             busStop = getStopDataById(trip[j].stop_id);
             pos = new google.maps.LatLng(busStop.stop_lat*1, busStop.stop_lon*1);
             addStopMarker(busStop, pos);
@@ -556,6 +597,7 @@ $connect = new mysqli($servername, $username, $password)
       }
       
       function isInNearFuture(time, windowLength){
+          //THIS DOESN'T WORK RIGHT NOW
       //returns true if 'time' is less than 'windowLength' hours in the future
         var time = time.split(":");
         update(JSON.stringify(time));
@@ -591,7 +633,7 @@ $connect = new mysqli($servername, $username, $password)
         return makeXMLHttpRequest(url);
       }
       //************************************************************************
-       
+
        function calculateAndDisplayRoute() {
          var directionsService = new google.maps.DirectionsService();
          var directionsRendererOptions = {
@@ -603,12 +645,12 @@ $connect = new mysqli($servername, $username, $password)
          var directionsRenderer = new google.maps.DirectionsRenderer(directionsRendererOptions);
          
          directionsService.route({
-           origin: startPos,
-           destination: endPos,
+           origin: start.position,
+           destination: end.position,
            travelMode: 'TRANSIT'
          }, function(response, status) {
            if (status === 'OK') {
-             update(JSON.stringify(response));
+             //update(JSON.stringify(response));
              directionsRenderer.setDirections(response);
            } else {
              window.alert('Directions request failed due to ' + status);
@@ -616,7 +658,6 @@ $connect = new mysqli($servername, $username, $password)
          });
        }
     </script>
-	
     <script async defer
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_9mrVl2c6FS59KEwhm5L55R08fcuF_V0&libraries=geometry,places&callback=initMap">
     </script>
